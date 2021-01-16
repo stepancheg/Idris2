@@ -32,13 +32,13 @@ ideTokens =
      (identAllowDashes, \x => Ident x),
      (space, Comment)]
 
-idelex : String -> Either (Int, Int, String) (List (WithBounds Token))
+idelex : String -> Either (FilePos, String) (List (WithBounds Token))
 idelex str
     = case lex ideTokens str of
            -- Add the EndInput token so that we'll have a line and column
            -- number to read when storing spans in the file
-           (tok, (l, c, "")) => Right (filter notComment tok ++
-                                      [MkBounded EndInput False l c l c])
+           (tok, (filePos, "")) => Right (filter notComment tok ++
+                                      [MkBounded EndInput False filePos filePos])
            (_, fail) => Left fail
     where
       notComment : WithBounds Token -> Bool

@@ -18,6 +18,13 @@ import Utils.Binary
 %default covering
 
 export
+TTC FilePos where
+  toBuf b (MkFilePos l c) = do toBuf b l; toBuf b c
+  fromBuf b = do l <- fromBuf b
+                 c <- fromBuf b
+                 pure (MkFilePos l c)
+
+export
 TTC FC where
   toBuf b (MkFC file startPos endPos)
       = do tag 0; toBuf b file; toBuf b startPos; toBuf b endPos

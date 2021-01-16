@@ -1,6 +1,5 @@
 module Core.FC
 
-import Text.Bounded
 import Text.PrettyPrint.Prettyprinter
 
 %default total
@@ -9,11 +8,34 @@ import Text.PrettyPrint.Prettyprinter
 -- Types
 
 public export
-FilePos : Type
-FilePos = (Int, Int)
+record FilePos where
+  constructor MkFilePos
+  line : Int -- 0-based
+  col : Int  -- 0-based
+
+export
+Show FilePos where
+  showPrec d (MkFilePos l c) =
+    showCon d "MkFilePos" (concat [showArg l, showArg c])
+
+export
+Eq FilePos where
+  (MkFilePos l c) == (MkFilePos l' c') = (l, c) == (l', c')
+
+export
+Ord FilePos where
+  compare (MkFilePos l c) (MkFilePos l' c') = compare (l, c) (l', c')
+
+export
+zeroFilePos : FilePos
+zeroFilePos = (MkFilePos 0 0)
+
+export
+irrelevant : FilePos
+irrelevant = MkFilePos (-1) (-1)
 
 showPos : FilePos -> String
-showPos (l, c) = show (l + 1) ++ ":" ++ show (c + 1)
+showPos (MkFilePos l c) = show (l + 1) ++ ":" ++ show (c + 1)
 
 public export
 FileName : Type
@@ -35,19 +57,12 @@ file EmptyFC = ""
 export
 startPos : FC -> FilePos
 startPos (MkFC _ s _) = s
-startPos EmptyFC = (0, 0)
+startPos EmptyFC = zeroFilePos
 
 export
 endPos : FC -> FilePos
 endPos (MkFC _ _ e) = e
-endPos EmptyFC = (0, 0)
-
-------------------------------------------------------------------------
--- Smart constructor
-
-export
-boundToFC : FileName -> WithBounds t -> FC
-boundToFC fname b = MkFC fname (start b) (end b)
+endPos EmptyFC = zeroFilePos
 
 ------------------------------------------------------------------------
 -- Predicates
@@ -56,8 +71,8 @@ boundToFC fname b = MkFC fname (start b) (end b)
 -- in the right file)
 export
 within : FilePos -> FC -> Bool
-within (x, y) (MkFC _ start end)
-   = (x, y) >= start && (x, y) <= end
+within fp (MkFC _ start end)
+   = fp >= start && fp <= end
 within _ _ = False
 
 -- Return whether a given line is on the same line as the file context (assuming
@@ -65,7 +80,7 @@ within _ _ = False
 export
 onLine : Int -> FC -> Bool
 onLine x (MkFC _ start end)
-   = x >= fst start && x <= fst end
+   = x >= start.line && x <= end.line
 onLine _ _ = False
 
 ------------------------------------------------------------------------
@@ -77,7 +92,7 @@ emptyFC = EmptyFC
 
 export
 toplevelFC : FC
-toplevelFC = MkFC "(toplevel)" (0, 0) (0, 0)
+toplevelFC = MkFC "(toplevel)" zeroFilePos zeroFilePos
 
 ------------------------------------------------------------------------
 -- Basic operations
@@ -114,4 +129,4 @@ Pretty FC where
                  <+> prettyPos (endPos loc)
     where
       prettyPos : FilePos -> Doc ann
-      prettyPos (l, c) = pretty (l + 1) <+> colon <+> pretty (c + 1)
+      prettyPos (MkFilePos l c) = pretty (l + 1) <+> colon <+> pretty (c + 1)

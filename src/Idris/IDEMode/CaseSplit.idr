@@ -181,5 +181,5 @@ getClause l n
   where
     indent : Maybe String -> FC -> String
     indent (Just mark) fc
-        = relit (Just mark) $ pack (replicate (integerToNat (cast (max 0 (snd (startPos fc) - 1)))) ' ')
-    indent Nothing fc = pack (replicate (integerToNat (cast (snd (startPos fc)))) ' ')
+        = relit (Just mark) $ pack (replicate (integerToNat (cast (max 0 ((startPos fc).col - 1)))) ' ')
+    indent Nothing fc = pack (replicate (integerToNat (cast ((startPos fc).col))) ' ')

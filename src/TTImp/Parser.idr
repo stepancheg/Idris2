@@ -376,7 +376,7 @@ mutual
            lhs <- appExpr fname indents
            caseRHS fname indents start lhs
 
-  caseRHS : FileName -> IndentInfo -> (Int, Int) -> RawImp ->
+  caseRHS : FileName -> IndentInfo -> FilePos -> RawImp ->
             Rule ImpClause
   caseRHS fname indents start lhs
       = do symbol "=>"
@@ -488,7 +488,7 @@ tyDecl fname indents
 
 mutual
   parseRHS : (withArgs : Nat) ->
-             FileName -> IndentInfo -> (Int, Int) -> RawImp ->
+             FileName -> IndentInfo -> FilePos -> RawImp ->
              Rule (Name, ImpClause)
   parseRHS withArgs fname indents start lhs
       = do symbol "="

@@ -16,8 +16,8 @@ import System.File
 
 public export
 data ParseError tok
-  = ParseFail String (Maybe (Int, Int)) (List tok)
-  | LexFail   (Int, Int, String)
+  = ParseFail String (Maybe FilePos) (List tok)
+  | LexFail   (FilePos, String)
   | FileFail  FileError
   | LitFail   LiterateError
 
@@ -26,12 +26,12 @@ Show tok => Show (ParseError tok) where
   show (ParseFail err loc toks)
       = "Parse error: " ++ err ++ " (next tokens: "
             ++ show (take 10 toks) ++ ")"
-  show (LexFail (c, l, str))
-      = "Lex error at " ++ show (c, l) ++ " input: " ++ str
+  show (LexFail (filePos, str))
+      = "Lex error at " ++ show (filePos.col, filePos.line) ++ " input: " ++ str
   show (FileFail err)
       = "File error: " ++ show err
-  show (LitFail (MkLitErr l c str))
-      = "Lit error(s) at " ++ show (c, l) ++ " input: " ++ str
+  show (LitFail (MkLitErr filePos str))
+      = "Lit error(s) at " ++ show (filePos.col, filePos.line) ++ " input: " ++ str
 
 export
 Pretty tok => Pretty (ParseError tok) where
@@ -39,20 +39,20 @@ Pretty tok => Pretty (ParseError tok) where
       = reflow "Parse error" <+> prettyLine loc <+> ":" <+> line <+> pretty err <++> parens (reflow "next tokens:"
             <++> brackets (align $ concatWith (surround (comma <+> space)) (pretty <$> take 10 toks)))
     where
-      prettyLine : Maybe (Int, Int) -> Doc ann
+      prettyLine : Maybe FilePos -> Doc ann
       prettyLine Nothing = emptyDoc
-      prettyLine (Just (r, c)) = space <+> "at" <++> "line" <++> pretty (r + 1) <+> ":" <+> pretty (c + 1)
-  pretty (LexFail (c, l, str))
-      = reflow "Lex error at" <++> pretty (c, l) <++> pretty "input:" <++> pretty str
+      prettyLine (Just (MkFilePos r c)) = space <+> "at" <++> "line" <++> pretty (r + 1) <+> ":" <+> pretty (c + 1)
+  pretty (LexFail (filePos, str))
+      = reflow "Lex error at" <++> pretty (filePos.line, filePos.col) <++> pretty "input:" <++> pretty str
   pretty (FileFail err)
       = reflow "File error:" <++> pretty (show err)
-  pretty (LitFail (MkLitErr l c str))
-      = reflow "Lit error(s) at" <++> pretty (c, l) <++> pretty "input:" <++> pretty str
+  pretty (LitFail (MkLitErr filePos str))
+      = reflow "Lit error(s) at" <++> pretty (filePos.col, filePos.line) <++> pretty "input:" <++> pretty str
 
 export
 toGenericParsingError : ParsingError token -> ParseError token
 toGenericParsingError (Error err [])      = ParseFail err Nothing []
-toGenericParsingError (Error err (t::ts)) = ParseFail err (Just (t.startLine, t.startCol)) (map val (t :: ts))
+toGenericParsingError (Error err (t::ts)) = ParseFail err (Just t.start) (map val (t :: ts))
 
 export
 hex : Char -> Maybe Int

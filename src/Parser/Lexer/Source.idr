@@ -271,13 +271,13 @@ rawTokens =
 
 export
 lexTo : (WithBounds Token -> Bool) ->
-        String -> Either (Int, Int, String) (List (WithBounds Token))
+        String -> Either (FilePos, String) (List (WithBounds Token))
 lexTo pred str
     = case lexTo pred rawTokens str of
            -- Add the EndInput token so that we'll have a line and column
            -- number to read when storing spans in the file
-           (tok, (l, c, "")) => Right (filter notComment tok ++
-                                      [MkBounded EndInput False l c l c])
+           (tok, (filePos, "")) => Right (filter notComment tok ++
+                                      [MkBounded EndInput False filePos filePos])
            (_, fail) => Left fail
     where
       notComment : WithBounds Token -> Bool
@@ -286,5 +286,5 @@ lexTo pred str
                           _ => True
 
 export
-lex : String -> Either (Int, Int, String) (List (WithBounds Token))
+lex : String -> Either (FilePos, String) (List (WithBounds Token))
 lex = lexTo (const False)

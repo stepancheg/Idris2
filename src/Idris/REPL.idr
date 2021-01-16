@@ -360,16 +360,16 @@ processEdit (TypeAt line col name)
                      [] => pure emptyDoc
                      ts => do tys <- traverse (displayType defs) ts
                               pure (vsep tys)
-         Just (n, num, t) <- findTypeAt (\p, n => within (line-1, col-1) p)
+         Just (n, num, t) <- findTypeAt (\p, n => within (MkFilePos (line-1) (col-1)) p)
             | Nothing => case res of
-                              Empty => throw (UndefinedName (MkFC "(interactive)" (0,0) (0,0)) name)
+                              Empty => throw (UndefinedName (MkFC "(interactive)" zeroFilePos zeroFilePos) name)
                               _     => pure (DisplayEdit res)
          case res of
             Empty => pure (DisplayEdit $ pretty (nameRoot n) <++> colon <++> !(displayTerm defs t))
             _     => pure (DisplayEdit emptyDoc)  -- ? Why () This means there is a global name and a type at (line,col)
 processEdit (CaseSplit upd line col name)
     = do let find = if col > 0
-                       then within (line-1, col-1)
+                       then within (MkFilePos (line-1) (col-1))
                        else onLine (line-1)
          OK splits <- getSplits (anyAt find) name
              | SplitFail err => pure (EditError (pretty $ show err))
@@ -438,7 +438,7 @@ processEdit (GenerateDef upd line name rej)
                     put ROpts (record { gdResult = Just (line, searchdef) } ropts)
                     Just (_, (fc, cs)) <- nextGenDef rej
                          | Nothing => pure (EditError "No search results")
-                    let l : Nat =  integerToNat (cast (snd (startPos fc)))
+                    let l : Nat =  integerToNat (cast (startPos fc).col)
                     Just srcLine <- getSourceLine line
                        | Nothing => pure (EditError "Source line not found")
                     let (markM, srcLineUnlit) = isLitLine srcLine
@@ -451,7 +451,7 @@ processEdit (GenerateDef upd line name rej)
 processEdit GenerateDefNext
     = do Just (line, (fc, cs)) <- nextGenDef 0
               | Nothing => pure (EditError "No more results")
-         let l : Nat =  integerToNat (cast (snd (startPos fc)))
+         let l : Nat =  integerToNat (cast (startPos fc).col)
          Just srcLine <- getSourceLine line
             | Nothing => pure (EditError "Source line not found")
          let (markM, srcLineUnlit) = isLitLine srcLine

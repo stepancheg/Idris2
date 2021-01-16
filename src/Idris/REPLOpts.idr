@@ -68,7 +68,7 @@ data ROpts : Type where
 
 export
 replFC : FC
-replFC = MkFC "(interactive)" (0, 0) (0, 0)
+replFC = MkFC "(interactive)" zeroFilePos zeroFilePos
 
 export
 setOutput : {auto o : Ref ROpts REPLOpts} ->

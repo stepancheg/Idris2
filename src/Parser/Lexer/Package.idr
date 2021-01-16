@@ -64,11 +64,11 @@ rawTokens =
   ]
 
 export
-lex : String -> Either (Int, Int, String) (List (WithBounds Token))
+lex : String -> Either (FilePos, String) (List (WithBounds Token))
 lex str =
   case lexTo (const False) rawTokens str of
-       (tokenData, (l, c, "")) =>
-         Right $ (filter (useful . val) tokenData) ++ [MkBounded EndOfInput False l c l c]
+       (tokenData, (filePos, "")) =>
+         Right $ (filter (useful . val) tokenData) ++ [MkBounded EndOfInput False filePos filePos]
        (_, fail) => Left fail
   where
     useful : Token -> Bool

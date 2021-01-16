@@ -3,8 +3,10 @@ module Language.Reflection.TT
 import public Data.List
 
 public export
-FilePos : Type
-FilePos = (Int, Int)
+record FilePos where
+     constructor MkFilePos
+     line : Int -- 0-based
+     col : Int  -- 0-based
 
 public export
 data FC : Type where

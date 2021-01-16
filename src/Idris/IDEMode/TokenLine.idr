@@ -57,5 +57,5 @@ tokens str
     = case lex srcTokens str of
            -- Add the EndInput token so that we'll have a line and column
            -- number to read when storing spans in the file
-           (srctoks, (l, c, rest)) =>
+           (srctoks, (filePos, rest)) =>
               map val srctoks ++ (if rest == "" then [] else [Other rest])

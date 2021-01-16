@@ -143,11 +143,11 @@ postOptions res@(ErrorLoadingFile _ _) (OutputFile _ :: rest)
     = do postOptions res rest
          pure False
 postOptions res (OutputFile outfile :: rest)
-    = do compileExp (PRef (MkFC "(script)" (0, 0) (0, 0)) (UN "main")) outfile
+    = do compileExp (PRef (MkFC "(script)" zeroFilePos zeroFilePos) (UN "main")) outfile
          postOptions res rest
          pure False
 postOptions res (ExecFn str :: rest)
-    = do execExp (PRef (MkFC "(script)" (0, 0) (0, 0)) (UN str))
+    = do execExp (PRef (MkFC "(script)" zeroFilePos zeroFilePos) (UN str))
          postOptions res rest
          pure False
 postOptions res (CheckOnly :: rest)

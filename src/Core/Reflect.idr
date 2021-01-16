@@ -534,6 +534,24 @@ Reflect LazyReason where
   reflect fc defs lhs env LUnknown = getCon fc defs (reflectiontt "LUnknown")
 
 export
+Reify FilePos where
+  reify defs val@(NDCon _ n _ _ args)
+      = case (!(full (gamma defs) n), args) of
+             (NS _ (UN "MkFilePos"), [l, c])
+                   => do l' <- reify defs !(evalClosure defs l)
+                         c' <- reify defs !(evalClosure defs c)
+                         pure (MkFilePos l' c')
+             _ => cantReify val "FilePos"
+  reify defs val = cantReify val "FilePos"
+
+export
+Reflect FilePos where
+  reflect fc defs lhs env (MkFilePos l c)
+      = do l' <- reflect fc defs lhs env l
+           c' <- reflect fc defs lhs env c
+           appCon fc defs (reflectiontt "MkFilePos") [l', c']
+
+export
 Reify FC where
   reify defs val@(NDCon _ n _ _ args)
       = case (!(full (gamma defs) n), args) of

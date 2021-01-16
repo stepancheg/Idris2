@@ -117,7 +117,7 @@ readHash imp
          pure (reexport imp, (nameAs imp, h))
 
 prelude : Import
-prelude = MkImport (MkFC "(implicit)" (0, 0) (0, 0)) False
+prelude = MkImport (MkFC "(implicit)" zeroFilePos zeroFilePos) False
                      (nsAsModuleIdent preludeNS) preludeNS
 
 export
@@ -189,8 +189,8 @@ modTime fname
 export
 getParseErrorLoc : String -> ParseError Token -> FC
 getParseErrorLoc fname (ParseFail _ (Just pos) _) = MkFC fname pos pos
-getParseErrorLoc fname (LexFail (l, c, _)) = MkFC fname (l, c) (l, c)
-getParseErrorLoc fname (LitFail (MkLitErr l c _)) = MkFC fname (l, 0) (l, 0)
+getParseErrorLoc fname (LexFail (filePos, _)) = MkFC fname filePos filePos
+getParseErrorLoc fname (LitFail (MkLitErr (MkFilePos l _) _)) = MkFC fname (MkFilePos l 0) (MkFilePos l 0)
 getParseErrorLoc fname _ = replFC
 
 export

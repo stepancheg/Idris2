@@ -131,17 +131,17 @@ TokenMap : (tokenType : Type) -> Type
 TokenMap tokenType = List (Lexer, String -> tokenType)
 
 tokenise : (WithBounds a -> Bool) ->
-           (line : Int) -> (col : Int) ->
+           FilePos ->
            List (WithBounds a) -> TokenMap a ->
-           List Char -> (List (WithBounds a), (Int, Int, List Char))
-tokenise pred line col acc tmap str
+           List Char -> (List (WithBounds a), (FilePos, List Char))
+tokenise pred filePos acc tmap str
     = case getFirstToken tmap str of
-           Just (tok, line', col', rest) =>
+           Just (tok, filePos', rest) =>
            -- assert total because getFirstToken must consume something
                if pred tok
-                  then (reverse acc, (line, col, []))
-                  else assert_total (tokenise pred line' col' (tok :: acc) tmap rest)
-           Nothing => (reverse acc, (line, col, str))
+                  then (reverse acc, (filePos, []))
+                  else assert_total (tokenise pred filePos' (tok :: acc) tmap rest)
+           Nothing => (reverse acc, (filePos, str))
   where
     countNLs : List Char -> Nat
     countNLs str = List.length (filter (== '\n') str)
@@ -153,15 +153,20 @@ tokenise pred line col acc tmap str
                 (incol, _) => cast (length incol)
 
     getFirstToken : TokenMap a -> List Char ->
-                    Maybe (WithBounds a, Int, Int, List Char)
+                    Maybe (WithBounds a, FilePos, List Char)
     getFirstToken [] str = Nothing
     getFirstToken ((lex, fn) :: ts) str
         = case scan lex [] str of
                Just (tok, rest) =>
-                 let line' = line + cast (countNLs tok)
-                     col' = getCols tok col in
-                     Just (MkBounded (fn (fastPack (reverse tok))) False line col line' col',
-                           line', col', rest)
+                 let line' = filePos.line + cast (countNLs tok)
+                     col' = getCols tok filePos.col in
+                     Just (MkBounded
+                              (fn (fastPack (reverse tok)))
+                              False
+                              (MkFilePos filePos.line filePos.col)
+                              (MkFilePos line' col'),
+                           (MkFilePos line' col'),
+                           rest)
                Nothing => getFirstToken ts str
 
 ||| Given a mapping from lexers to token generating functions (the
@@ -169,14 +174,14 @@ tokenise pred line col acc tmap str
 ||| and the line, column, and remainder of the input at the first point in the
 ||| string where there are no recognised tokens.
 export
-lex : TokenMap a -> String -> (List (WithBounds a), (Int, Int, String))
+lex : TokenMap a -> String -> (List (WithBounds a), (FilePos, String))
 lex tmap str
-    = let (ts, (l, c, str')) = tokenise (const False) 0 0 [] tmap (unpack str) in
-          (ts, (l, c, fastPack str'))
+    = let (ts, (filePos, str')) = tokenise (const False) zeroFilePos [] tmap (unpack str) in
+          (ts, (filePos, fastPack str'))
 
 export
 lexTo : (WithBounds a -> Bool) ->
-        TokenMap a -> String -> (List (WithBounds a), (Int, Int, String))
+        TokenMap a -> String -> (List (WithBounds a), (FilePos, String))
 lexTo pred tmap str
-    = let (ts, (l, c, str')) = tokenise pred 0 0 [] tmap (unpack str) in
-          (ts, (l, c, fastPack str'))
+    = let (ts, (filePos, str')) = tokenise pred zeroFilePos [] tmap (unpack str) in
+          (ts, (filePos, fastPack str'))

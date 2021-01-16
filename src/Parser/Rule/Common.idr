@@ -14,19 +14,19 @@ EmptyRule : Type -> Type -> Type
 EmptyRule token ty = Grammar token False ty
 
 export
-location : {token : _} -> EmptyRule token (Int, Int)
+location : {token : _} -> EmptyRule token FilePos
 location
     = do tok <- removeIrrelevance <$> bounds peek
          pure $ start tok
 
 export
-endLocation : {token : _} -> EmptyRule token (Int, Int)
+endLocation : {token : _} -> EmptyRule token FilePos
 endLocation
     = do tok <- removeIrrelevance <$> bounds peek
          pure $ end tok
 
 export
-position : {token : _} -> EmptyRule token ((Int, Int), (Int, Int))
+position : {token : _} -> EmptyRule token (FilePos, FilePos)
 position
     = do tok <- removeIrrelevance <$> bounds peek
          pure (start tok, end tok)
@@ -35,5 +35,5 @@ position
 export
 column : {token : _ } -> EmptyRule token Int
 column
-    = do (line, col) <- location
+    = do (MkFilePos line col) <- location
          pure col

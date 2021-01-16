@@ -59,8 +59,8 @@ ploc : {auto o : Ref ROpts REPLOpts} ->
        FC -> Core (Doc IdrisAnn)
 ploc EmptyFC = pure emptyDoc
 ploc fc@(MkFC fn s e) = do
-    let (sr, sc) = mapHom (fromInteger . cast) s
-    let (er, ec) = mapHom (fromInteger . cast) e
+    let (sr, sc) = mapHom (fromInteger . cast) (s.line, s.col)
+    let (er, ec) = mapHom (fromInteger . cast) (e.line, e.col)
     let nsize = length $ show (er + 1)
     let head = annotate FileCtxt (pretty fc)
     source <- lines <$> getCurrentElabSource
@@ -86,10 +86,10 @@ ploc2 : {auto o : Ref ROpts REPLOpts} ->
 ploc2 fc EmptyFC = ploc fc
 ploc2 EmptyFC fc = ploc fc
 ploc2 (MkFC fn1 s1 e1) (MkFC fn2 s2 e2) =
-    do let (sr1, sc1) = mapHom (fromInteger . cast) s1
-       let (sr2, sc2) = mapHom (fromInteger . cast) s2
-       let (er1, ec1) = mapHom (fromInteger . cast) e1
-       let (er2, ec2) = mapHom (fromInteger . cast) e2
+    do let (sr1, sc1) = mapHom (fromInteger . cast) (s1.line, s1.col)
+       let (sr2, sc2) = mapHom (fromInteger . cast) (s2.line, s2.col)
+       let (er1, ec1) = mapHom (fromInteger . cast) (e1.line, e1.col)
+       let (er2, ec2) = mapHom (fromInteger . cast) (e2.line, e2.col)
        if (er2 > the Nat (er1 + 5))
           then pure $ !(ploc (MkFC fn1 s1 e1)) <+> line <+> !(ploc (MkFC fn2 s2 e2))
           else do let nsize = length $ show (er2 + 1)

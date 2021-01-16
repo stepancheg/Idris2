@@ -398,10 +398,10 @@ displayIDEResult outf i (NameLocList dat)
                    (\(name, fc)
                      => pure $ SExpList [ StringAtom !(render $ pretty name)
                                         , StringAtom (file fc)
-                                        , IntegerAtom $ cast (fst (startPos fc))
-                                        , IntegerAtom $ cast (snd (startPos fc))
-                                        , IntegerAtom $ cast (fst (endPos fc))
-                                        , IntegerAtom $ cast (snd (endPos fc))]
+                                        , IntegerAtom $ cast (startPos fc).line
+                                        , IntegerAtom $ cast (startPos fc).col
+                                        , IntegerAtom $ cast (endPos fc).line
+                                        , IntegerAtom $ cast (endPos fc).col]
                    )
                    dat
                  )

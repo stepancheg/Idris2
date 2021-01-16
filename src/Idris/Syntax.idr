@@ -755,7 +755,7 @@ initSyntax
                empty
                []
                []
-               (IVar (MkFC "(default)" (0, 0) (0, 0)) (UN "main"))
+               (IVar (MkFC "(default)" zeroFilePos zeroFilePos) (UN "main"))
 
 -- A label for Syntax info in the global state
 export

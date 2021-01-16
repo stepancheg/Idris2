@@ -1,5 +1,7 @@
 module Text.Bounded
 
+import public Core.FC
+
 %default total
 
 public export
@@ -7,32 +9,26 @@ record WithBounds ty where
   constructor MkBounded
   val : ty
   isIrrelevant : Bool
-  startLine : Int
-  startCol : Int
-  endLine : Int
-  endCol : Int
+  start : FilePos
+  end : FilePos
 
 export
-start : WithBounds ty -> (Int, Int)
-start b = (b.startLine, b.startCol)
-
-export
-end : WithBounds ty -> (Int, Int)
-end b = (b.endLine, b.endCol)
+boundToFC : FileName -> WithBounds t -> FC
+boundToFC fname b = MkFC fname (start b) (end b)
 
 export
 Eq ty => Eq (WithBounds ty) where
-  (MkBounded val ir sl sc el ec) == (MkBounded val' ir' sl' sc' el' ec') =
-    val == val' && ir == ir' && sl == sl' && sc == sc' && el == el' && ec == ec'
+  (MkBounded val ir s e) == (MkBounded val' ir' s' e') =
+    val == val' && ir == ir' && s == s' && e == e'
 
 export
 Show ty => Show (WithBounds ty) where
-  showPrec d (MkBounded val ir sl sc el ec) =
-    showCon d "MkBounded" (concat [showArg ir, showArg val, showArg sl, showArg sc, showArg el, showArg ec])
+  showPrec d (MkBounded val ir s e) =
+    showCon d "MkBounded" (concat [showArg ir, showArg val, showArg s, showArg e])
 
 export
 Functor WithBounds where
-  map f (MkBounded val ir sl sc el ec) = MkBounded (f val) ir sl sc el ec
+  map f (MkBounded val ir s e) = MkBounded (f val) ir s e
 
 export
 Foldable WithBounds where
@@ -40,25 +36,25 @@ Foldable WithBounds where
 
 export
 Traversable WithBounds where
-  traverse f (MkBounded v a b c d e) = (\ v => MkBounded v a b c d e) <$> f v
+  traverse f (MkBounded v a b c) = (\ v => MkBounded v a b c) <$> f v
 
 export
 irrelevantBounds : ty -> WithBounds ty
-irrelevantBounds x = MkBounded x True (-1) (-1) (-1) (-1)
+irrelevantBounds x = MkBounded x True irrelevant irrelevant
 
 export
 removeIrrelevance : WithBounds ty -> WithBounds ty
-removeIrrelevance (MkBounded val ir sl sc el ec) = MkBounded val True sl sc el ec
+removeIrrelevance (MkBounded val ir s e) = MkBounded val True s e
 
 export
 mergeBounds : WithBounds ty -> WithBounds ty' -> WithBounds ty'
-mergeBounds (MkBounded _ True _ _ _ _) (MkBounded val True _ _ _ _) = irrelevantBounds val
-mergeBounds (MkBounded _ True _ _ _ _) b2 = b2
-mergeBounds b1 (MkBounded val True _ _ _ _) = const val <$> b1
+mergeBounds (MkBounded _ True _ _) (MkBounded val True _ _) = irrelevantBounds val
+mergeBounds (MkBounded _ True _ _) b2 = b2
+mergeBounds b1 (MkBounded val True _ _) = const val <$> b1
 mergeBounds b1 b2 =
-  let (ur, uc) = min (start b1) (start b2)
-      (lr, lc) = max (end b1) (end b2) in
-      MkBounded b2.val False ur uc lr lc
+  let u = min (start b1) (start b2)
+      l = max (end b1) (end b2) in
+      MkBounded b2.val False u l
 
 export
 joinBounds : WithBounds (WithBounds ty) -> WithBounds ty

@@ -77,8 +77,8 @@ emitError err
                                               SExpList []],
                                     toSExp i])
   where
-    addOne : (Int, Int) -> (Int, Int)
-    addOne (l, c) = (l + 1, c + 1)
+    addOne : FilePos -> (Int, Int)
+    addOne (MkFilePos l c) = (l + 1, c + 1)
 
 export
 emitWarning : {auto c : Ref Ctxt Defs} ->
@@ -105,8 +105,8 @@ emitWarning w
                                               SExpList []],
                                     toSExp i])
   where
-    addOne : (Int, Int) -> (Int, Int)
-    addOne (l, c) = (l + 1, c + 1)
+    addOne : FilePos -> (Int, Int)
+    addOne (MkFilePos l c) = (l + 1, c + 1)
 
 export
 emitWarnings : {auto c : Ref Ctxt Defs} ->
@@ -119,7 +119,7 @@ emitWarnings
          put Ctxt (record { warnings = [] } defs)
 
 getFCLine : FC -> Int
-getFCLine fc = fst (startPos fc)
+getFCLine fc = (startPos fc).line
 
 export
 updateErrorLine : {auto o : Ref ROpts REPLOpts} ->

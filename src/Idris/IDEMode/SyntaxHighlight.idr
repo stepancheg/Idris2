@@ -38,7 +38,7 @@ record Highlight where
   ns : String
 
 SExpable FC where
-  toSExp (MkFC fname (startLine, startCol) (endLine, endCol))
+  toSExp (MkFC fname (MkFilePos startLine startCol) (MkFilePos endLine endCol))
     = SExpList [ SExpList [ SymbolAtom "filename", StringAtom fname ]
                , SExpList [ SymbolAtom "start", IntegerAtom (cast startLine + 1), IntegerAtom (cast startCol + 1) ]
                , SExpList [ SymbolAtom "end", IntegerAtom (cast endLine + 1), IntegerAtom (cast endCol + 1) ]
