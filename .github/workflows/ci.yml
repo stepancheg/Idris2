@@ -1,0 +1,195 @@
+name: CI
+on:
+  push:
+    branches:
+      - '*'
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ubuntu:
+    name: Ubuntu Chez
+    runs-on: ubuntu-latest
+    env:
+      SCHEME: scheme
+      IDRIS2_TESTS_CG: chez
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: |
+          sudo apt-get install -y chezscheme
+          echo "::add-path::$HOME/.idris2/bin"
+      - name: Build from bootstrap
+        run: make bootstrap && make install
+        shell: bash
+      - name: Build and test self-hosted
+        run: make clean && make all && make test INTERACTIVE=''
+        shell: bash
+
+  ubuntu-racket:
+    name: Ubuntu Racket
+    runs-on: ubuntu-latest
+    env:
+      IDRIS2_TESTS_CG: racket
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y racket
+      - name: Build from bootstrap
+        run: make bootstrap-racket
+        shell: bash
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    env:
+      SCHEME: chez
+      IDRIS2_TESTS_CG: chez
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: |
+          brew install chezscheme
+          brew install coreutils
+          echo "::add-path::$HOME/.idris2/bin"
+      - name: Build and test Idris 2 from bootstrap
+        run: make bootstrap && make install
+        shell: bash
+      - name: Build and test self-hosted
+        run: make clean && make all && make test INTERACTIVE=''
+        shell: bash
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    env:
+      MSYSTEM: MINGW64
+      MSYS2_PATH_TYPE: inherit
+      SCHEME: scheme
+      IDRIS2_TESTS_CG: chez
+      CC: gcc
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Init
+        run: |
+          git config --global core.autocrlf false
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Get Chez Scheme
+        run: |
+          git clone --depth 1 https://github.com/cisco/ChezScheme
+          c:\msys64\usr\bin\bash -l -c "pacman -S --noconfirm tar make"
+          echo "::set-env name=PWD::$(c:\msys64\usr\bin\cygpath -u $(pwd))"
+      - name: Configure and Build Chez Scheme
+        run: |
+          c:\msys64\usr\bin\bash -l -c "cd $env:PWD && cd ChezScheme && ./configure --threads && make"
+      - name: Set Path
+        run: |
+          $chez="$(pwd)\ChezScheme\ta6nt\bin\ta6nt"
+          $idris="$(pwd)\.idris2"
+          echo "::add-path::$chez"
+          echo "::add-path::$idris\bin"
+          echo "::set-env name=IDRIS_PREFIX::$idris"
+          echo "::set-env name=PREFIX::$(c:\msys64\usr\bin\cygpath -u $idris)"
+      - name: Test Scheme
+        run: |
+          scheme --version
+      - name: Bootstrap and install
+        run: c:\msys64\usr\bin\bash -l -c "cd $env:PWD && make bootstrap && make install"
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    env:
+      SCHEME: scheme
+      IDRIS2_TESTS_CG: chez
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: |
+          sudo apt-get install -y chezscheme
+          echo "::add-path::$HOME/.idris2/bin"
+      - name: Build from bootstrap
+        run: make bootstrap && make install && idris2 --clean idris2api.ipkg && make install-api
+        shell: bash
+      - name: Test API
+        run: cd tests/idris2/api001 && ./run idris2
+        shell: bash
+
+  nix:
+    name: Nix
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: 0
+    - uses: cachix/install-nix-action@v12
+      with:
+        install_url: https://github.com/numtide/nix-flakes-installer/releases/download/nix-3.0pre20200820_4d77513/install
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    - run: nix build
+
+  prev-version:
+    name: Build From Previous Version
+    runs-on: ubuntu-latest
+    env:
+      SCHEME: scheme
+      IDRIS2_TESTS_CG: chez
+      IDRIS2_VERSION: 0.3.0
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install build dependencies
+        run: |
+          sudo apt-get install -y chezscheme
+          echo "::add-path::$HOME/.idris2/bin"
+      - name : Build previous version
+        run: |
+          wget https://www.idris-lang.org/idris2-src/idris2-$IDRIS2_VERSION.tgz
+          tar zxvf idris2-$IDRIS2_VERSION.tgz
+          cd Idris2-$IDRIS2_VERSION
+          make bootstrap-build && make install
+          cd ..
+      - name: Build from previous version
+        run: make all
+
+  super-linter:
+    name: super-linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          # Full git history is needed to get a proper list of changed files within `super-linter`
+          fetch-depth: 0
+      - name: Lint Code Base
+        uses: github/super-linter@v3
+        env:
+          VALIDATE_ALL_CODEBASE: false
+          DEFAULT_BRANCH: master
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint-py:
+    name: lint.py
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Lint the sources
+        run: python3 lint/lint.py
+        shell: bash
