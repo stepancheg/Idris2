@@ -63,7 +63,6 @@ src/IdrisPaths.idr: FORCE
 	echo '-- @generated' > src/IdrisPaths.idr
 	echo 'module IdrisPaths' >> src/IdrisPaths.idr
 	echo 'export idrisVersion : ((Nat,Nat,Nat), String); idrisVersion = ((${MAJOR},${MINOR},${PATCH}), "${GIT_SHA1}")' >> src/IdrisPaths.idr
-	echo 'export yprefix : String; yprefix="${IDRIS2_PREFIX}"' >> src/IdrisPaths.idr
 
 FORCE:
 

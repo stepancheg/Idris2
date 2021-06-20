@@ -17,4 +17,9 @@ LD_LIBRARY_PATH="$DIR/idris2_app":$LD_LIBRARY_PATH
 PATH="$DIR/idris2_app":$PATH
 export LD_LIBRARY_PATH PATH
 
-${SCHEME} --script "$DIR/idris2_app/idris2-boot.so" "$@"
+if [ -z "$IDRIS2_PREFIX" ]; then
+    IDRIS2_PREFIX="$(dirname "$DIR")"
+    export IDRIS2_PREFIX
+fi
+
+"${SCHEME}" --script "$DIR/idris2_app/idris2-boot.so" "$@"

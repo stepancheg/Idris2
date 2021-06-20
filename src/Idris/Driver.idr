@@ -51,7 +51,8 @@ updateEnv
          bprefix <- coreLift $ idrisGetEnv "IDRIS2_PREFIX"
          the (Core ()) $ case bprefix of
               Just p => setPrefix p
-              Nothing => setPrefix yprefix
+              Nothing => throw (InternalError (
+                  "IDRIS2_PREFIX env variable need to be set by either launcher script or manually"))
          bpath <- coreLift $ idrisGetEnv "IDRIS2_PATH"
          the (Core ()) $ case bpath of
               Just path => do traverseList1_ addExtraDir (map trim (split (==pathSeparator) path))
@@ -258,9 +259,6 @@ quitOpts (Help Nothing :: _)
          pure False
 quitOpts (Help (Just HelpLogging) :: _)
     = do putStrLn helpTopics
-         pure False
-quitOpts (ShowPrefix :: _)
-    = do putStrLn yprefix
          pure False
 quitOpts (_ :: opts) = quitOpts opts
 

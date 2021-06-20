@@ -385,6 +385,10 @@ startChezPreamble = unlines
     , "else"
     , "  DIR=$(dirname \"$(readlink -f -- \"$0\")\")"
     , "fi"
+    , ""
+    , "if [ -z \"$IDRIS2_PREFIX\" ]; then"
+    , "  export IDRIS2_PREFIX=\"$(dirname \"$DIR\")\""
+    , "fi"
     , ""  -- so that the preamble ends with a newline
     ]
 

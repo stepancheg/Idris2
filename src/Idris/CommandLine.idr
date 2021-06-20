@@ -83,8 +83,6 @@ data CLOpt
   OutputDir String |
    ||| Generate profile data when compiling (backend dependent)
   Profile |
-   ||| Show the installation prefix
-  ShowPrefix |
    ||| Display Idris version
   Version |
    ||| Display help text
@@ -233,8 +231,6 @@ options = [MkOpt ["--check", "-c"] [] [CheckOnly]
              (Just "Use SHA256 hashes instead of modification time to determine if a source file needs rebuilding"),
 
            optSeparator,
-           MkOpt ["--prefix"] [] [ShowPrefix]
-              (Just "Show installation prefix"),
            MkOpt ["--paths"] [] [BlodwenPaths]
               (Just "Show paths"),
            MkOpt ["--libdir"] [] [Directory LibDir]
